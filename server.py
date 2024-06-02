@@ -9,7 +9,7 @@ from feature import features
  
 def proceed():
     f = features()
-    f.filePath = './public/fragments/fragment.png'
+    f.filePath = '../public/fragments/fragment.png'
     f.getImg()
     f.strengthen()
     # f.getSIFT()
@@ -61,7 +61,7 @@ def getProceed():
         file_name = data.get('fileName')
         sname = '0.jpg'
         f = features()
-        f.filePath = 'public/fragments/fragment.png'
+        f.filePath = '../public/fragments/fragment.png'
         f.getImg()
 
         if file_name == 'SIFT':
@@ -104,11 +104,12 @@ def get_fragment():
             image_data = base64.b64decode(base64_image.split(',')[1])
             # 在这里处理接收到的图像数据，可以保存到服务器或进行其他操作
             # 例如，保存图像并返回成功响应
-            # print("!")
-            with open('./public/fragments/fragment.png', 'wb') as f:
-                f.write(image_data)
-            with open(auto_save_file('./public/fragments/fragment0.png'), 'wb') as f:
-                f.write(image_data)
+            with open('../public/fragments/fragment.png', 'wb') as f:
+                # f.write(image_data)
+                print("fragment written:",f.write(image_data))
+            with open(auto_save_file('../public/fragments/fragment0.png'), 'wb') as f:
+                # f.write(image_data)
+                print("fragment0 written:",f.write(image_data))
                 # proceed()
             return jsonify({'message': '上传成功'})
         else:

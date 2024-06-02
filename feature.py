@@ -10,19 +10,18 @@ from pywt import dwt2, idwt2
 from matplotlib import font_manager
 import os
 import re
+import argparse
+ 
 
 class features:
 
-    def __init__(self):
-        self.filePath = 'public/fragments/fragment0.png'
-        self.savePath = 'public/fragments/proceed0.png'
-        self.img = []
-        self.HOG = []
-        self.sobelx = []
-        self.sobely = []
-        self.laplas = []
-        self.Hog = None
-        self.hog_d = None
+    def __init__(self, inputPath, outputPath):
+        self.filePath = inputPath
+        self.savePath = outputPath
+        # self.savePath = 'public/fragments/proceed0.png'
+
+        if not os.path.exists(self.savePath):
+            os.makedirs(self.savePath)
 
     # 自动获取存储路径
     def getSavePath(self,an):
@@ -76,7 +75,8 @@ class features:
         # plt.subplot(2,2,4),plt.imshow(gs)
         # plt.title('Sobel s'), plt.xticks([]), plt.yticks([])
         # plt.show()
-        cv.imwrite('0.jpg', gs)
+        # cv.imwrite('0.jpg', gs)
+        return gs
         # cv.imshow('gradient', gradient)
         # cv.imshow('sharp', sharp)
         # cv.waitKey(0)
@@ -105,7 +105,8 @@ class features:
         # # Convert the image to uint8
         # sharp = sharp.astype("uint8")
 
-        cv.imwrite('0.jpg', gradient)
+        # cv.imwrite('0.jpg', gradient)
+        return gradient
     # 
     def erode(self, kernel_size_num=3, start_color=(255, 255, 255), end_color=(255, 0, 0),
             num_iterations=12, has_background=True):
@@ -135,14 +136,14 @@ class features:
             img[thresh > 0] = color
             i += 1
 
-        cv.imshow('Eroded Image', img)
-        cv.waitKey(0)
+        # cv.imshow('Eroded Image', img)
+        return img        
     
     # scharr
     def getScharr(self):
-        self.scharrx = cv.convertScaleAbs(cv.Scharr(self.img,cv.CV_64F,1,0))
-        self.scharry = cv.convertScaleAbs(cv.Scharr(self.img,cv.CV_64F,0,1))
-        self.scharrs = cv.addWeighted(self.scharrx, 0.5, self.scharry, 0.5, 0)
+        scharrx = cv.convertScaleAbs(cv.Scharr(self.img,cv.CV_64F,1,0))
+        scharry = cv.convertScaleAbs(cv.Scharr(self.img,cv.CV_64F,0,1))
+        scharrs = cv.addWeighted(scharrx, 0.5, scharry, 0.5, 0)
         # plt.subplot(2,2,1),plt.imshow(self.img)
         # plt.title('Original'), plt.xticks([]), plt.yticks([])
         # plt.subplot(2,2,2),plt.imshow(self.scharrx)
@@ -152,11 +153,12 @@ class features:
         # plt.subplot(2,2,4),plt.imshow(self.scharrs)
         # plt.title('scharr s'), plt.xticks([]), plt.yticks([])
         # plt.show()
-        cv.imwrite('0.jpg', self.scharrs)
+        # cv.imwrite('0.jpg', self.scharrs)
+        return scharrs
 
     #laplas
     def getLaplas(self):
-        self.laplas = cv.Laplacian(self.img, cv.CV_64F)
+        return cv.Laplacian(self.img, cv.CV_64F)
     
     # SIFT
     # 
@@ -215,19 +217,9 @@ class features:
 
 
         print("运行时间:%.2f秒"%(end-start))
-        # cv.imshow("img1_gray",img1_gray)
-        # cv.imshow("img3_gray",img3_gray)
-        # cv.imshow("Result", res)
-        # cv.imshow("img1", img1)
-        # cv.imshow("img3", img3)
-        # cv.imwrite("SIFTimg1_gray.jpg",img1_gray)
-        # cv.imwrite("SIFTimg3_gray.jpg",img3_gray)
-        cv.imwrite("0.jpg",img1)
-        # cv.imwrite("SIFTimg3.jpg",img3)
-        # cv.imwrite("SIFTimg1t.jpg",img1t)
-        # cv.imwrite("SIFTimg3t.jpg",img3t)
-        # cv.imwrite("SIFTResult.jpg",res)
-        #cv.destroyAllWindows()
+        # cv.imwrite("0.jpg",img1)
+        return img1
+
 
 
     def DWT(self):
@@ -325,7 +317,8 @@ class features:
         # print(np.array(vector).shape)
         # plt.imshow(image, cmap=plt.cm.gray)
         # plt.show()
-        cv.imwrite('0.jpg', image)
+        # cv.imwrite('0.jpg', image)
+        return image
 
     # color k-means
     def color_kmeans(self):
@@ -353,11 +346,49 @@ class features:
                 pic_new.putpixel((i, j), int(256 / (label[i][j] + 1)))
         #pic_new = cv2.applyColorMap(cv2.convertScaleAbs(pic_new, alpha=-1), cv2.COLORMAP_JET)
         #以JPEG格式保存图片
-        pic_new.save("0.jpg")
+        return pic_new
 
 
 def proceed():
     f = features()
     f.getImg()
     f.strengthen()
-    # f.getSIFT()
+    f.getSIFT()
+
+def main():
+    parser = argparse.ArgumentParser(description="Process an image using various algorithms.")
+    parser.add_argument("input", help="Path to the input image")
+    parser.add_argument("-o", "--output", default="./processed_images", help="Path to the output directory")
+    parser.add_argument("-a", "--algorithm", nargs='+', default=["all"], help="List of algorithms to apply. Options: all, strengthen, erode, scharr, laplas, sift, dwt, hog, kmeans")
+    
+    args = parser.parse_args()
+
+    f = features(args.input, args.output)
+
+    if "all" in args.algorithm or "strengthen" in args.algorithm:
+        f.getImg()
+        f.strengthen()
+    
+    if "all" in args.algorithm or "erode" in args.algorithm:
+        f.erode()
+
+    if "all" in args.algorithm or "scharr" in args.algorithm:
+        f.getScharr()
+
+    if "all" in args.algorithm or "laplas" in args.algorithm:
+        f.getLaplas()
+
+    if "all" in args.algorithm or "sift" in args.algorithm:
+        f.getSIFT()
+
+    if "all" in args.algorithm or "dwt" in args.algorithm:
+        f.DWT()
+
+    if "all" in args.algorithm or "hog" in args.algorithm:
+        f.getHOG()
+
+    if "all" in args.algorithm or "kmeans" in args.algorithm:
+        f.color_kmeans()
+
+if __name__ == "__main__":
+    main()
